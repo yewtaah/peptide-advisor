@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { products } from "../data/products";
+import AvatarAdvisor from "../components/AvatarAdvisor";
 import {
   ArrowRightIcon,
   CartIcon,
@@ -9,40 +9,11 @@ import {
   SparkleIcon,
   CheckIcon,
   AlertIcon,
-  SendIcon,
 } from "../components/icons";
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  text: string;
-}
-
-function generateAdvisorReply(question: string, productName: string): string {
-  const q = question.toLowerCase();
-  if (q.includes("dose") || q.includes("dosing") || q.includes("how much")) {
-    return `Dosing for ${productName} varies by goals and body weight. See the "Dosing Considerations" panel above for the commonly researched range, and confirm with a licensed practitioner before starting — this isn't personalized medical advice.`;
-  }
-  if (q.includes("side effect") || q.includes("risk") || q.includes("safe")) {
-    return `The main risks noted for ${productName} are listed in the Risks & Considerations panel. If you have an existing condition or take other medications, a practitioner consult is recommended before use.`;
-  }
-  if (q.includes("stack") || q.includes("combine") || q.includes("with")) {
-    return `Stacking depends on your goals — many customers pair recovery peptides with longevity or metabolic protocols. I'd recommend a Health Assessment or practitioner consult to confirm compatibility with ${productName}.`;
-  }
-  return `Good question about ${productName}. Based on current research, this product is generally used as described in the overview above. For anything specific to your health history, please consult one of our licensed practitioners.`;
-}
 
 export default function ProductDetail() {
   const { id } = useParams();
   const product = products.find((p) => p.id === id);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "assistant",
-      text: product
-        ? `Hi, I'm your AI Peptide Advisor. Ask me anything about ${product.name} — dosing, safety, or how it fits your goals.`
-        : "Hi, I'm your AI Peptide Advisor.",
-    },
-  ]);
-  const [input, setInput] = useState("");
 
   if (!product) {
     return (
@@ -53,18 +24,6 @@ export default function ProductDetail() {
         </Link>
       </div>
     );
-  }
-
-  function handleSend() {
-    const text = input.trim();
-    if (!text) return;
-    const reply = generateAdvisorReply(text, product!.name);
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text },
-      { role: "assistant", text: reply },
-    ]);
-    setInput("");
   }
 
   return (
@@ -150,43 +109,7 @@ export default function ProductDetail() {
           <p className="mt-2 text-sm text-muted">{product.dosingNotes}</p>
         </div>
 
-        <div className="mt-8 rounded-xl border border-border bg-bg/60">
-          <div className="max-h-80 space-y-4 overflow-y-auto p-5">
-            {messages.map((m, i) => (
-              <div
-                key={i}
-                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2.5 text-sm ${
-                    m.role === "user"
-                      ? "bg-teal-dark/25 text-ink"
-                      : "border border-border bg-surface text-muted"
-                  }`}
-                >
-                  {m.text}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 border-t border-border p-4">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder={`Ask about dosing, safety, or stacking ${product.name}...`}
-              className="flex-1 rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-muted-dark focus:border-teal-dark focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleSend}
-              aria-label="Send"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal text-bg hover:bg-teal-glow"
-            >
-              <SendIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        <AvatarAdvisor product={product} />
       </section>
 
       <div className="mt-10">
