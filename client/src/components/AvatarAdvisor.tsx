@@ -29,6 +29,16 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const streamIdRef = useRef<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const greetedRef = useRef(false);
+
+  function speak(text: string) {
+    if (!streamIdRef.current) return;
+    fetch(`${API_BASE}/stream/${streamIdRef.current}/speak`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionIdRef.current, text }),
+    }).catch(() => {});
+  }
 
   useEffect(() => {
     return () => {
@@ -38,6 +48,7 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
   }, []);
 
   async function connect() {
+    greetedRef.current = false;
     setStatus("connecting");
     setErrorMessage(null);
     try {
@@ -72,6 +83,10 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "connected") {
           setStatus("connected");
+          if (!greetedRef.current) {
+            greetedRef.current = true;
+            speak(messages[0].text);
+          }
         } else if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
           setStatus("error");
           setErrorMessage("The avatar connection was lost.");
