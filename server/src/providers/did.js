@@ -1,6 +1,6 @@
 const DID_API_BASE = "https://api.d-id.com";
 
-const DEFAULT_SOURCE_URL = "https://d-id-public-bucket.s3.us-west-2.amazonaws.com/alice.jpg";
+const DEFAULT_PRESENTER_ID = "v2_public_jack@hOMV94SahG";
 
 function authHeader() {
   const key = process.env.DID_API_KEY;
@@ -30,45 +30,41 @@ async function didFetch(path, options = {}) {
 }
 
 function createStream() {
-  return didFetch("/talks/streams", {
+  return didFetch("/clips/streams", {
     method: "POST",
     body: JSON.stringify({
-      source_url: process.env.DID_SOURCE_URL || DEFAULT_SOURCE_URL,
+      presenter_id: process.env.DID_PRESENTER_ID || DEFAULT_PRESENTER_ID,
     }),
   });
 }
 
 function sendAnswer(streamId, sessionId, answer) {
-  return didFetch(`/talks/streams/${streamId}/sdp`, {
+  return didFetch(`/clips/streams/${streamId}/sdp`, {
     method: "POST",
     body: JSON.stringify({ answer, session_id: sessionId }),
   });
 }
 
 function sendIceCandidate(streamId, sessionId, candidate) {
-  return didFetch(`/talks/streams/${streamId}/ice`, {
+  return didFetch(`/clips/streams/${streamId}/ice`, {
     method: "POST",
     body: JSON.stringify({ session_id: sessionId, ...candidate }),
   });
 }
 
 function sendText(streamId, sessionId, text) {
-  return didFetch(`/talks/streams/${streamId}`, {
+  return didFetch(`/clips/streams/${streamId}`, {
     method: "POST",
     body: JSON.stringify({
       session_id: sessionId,
-      script: {
-        type: "text",
-        input: text,
-        provider: { type: "microsoft", voice_id: "en-US-JennyNeural" },
-      },
+      script: { type: "text", input: text },
       config: { fluent: true, pad_audio: 0 },
     }),
   });
 }
 
 function closeStream(streamId, sessionId) {
-  return didFetch(`/talks/streams/${streamId}`, {
+  return didFetch(`/clips/streams/${streamId}`, {
     method: "DELETE",
     body: JSON.stringify({ session_id: sessionId }),
   });

@@ -149,12 +149,12 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
   return (
     <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-5">
       <div className="md:col-span-2">
-        <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-bg/80">
+        <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-bg/80">
           <video
             ref={videoRef}
             autoPlay
             playsInline
-            className={`h-full w-full object-cover ${status === "connected" ? "" : "hidden"}`}
+            className={`h-full w-full object-contain ${status === "connected" ? "" : "hidden"}`}
           />
           {status !== "connected" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
