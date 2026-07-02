@@ -5,7 +5,7 @@ import { SendIcon, VideoIcon, AlertIcon } from "./icons";
 
 type Status = "idle" | "connecting" | "connected" | "error";
 
-const API_BASE = "/api/advisor";
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? ""}/api/advisor`;
 
 interface StreamStartResponse {
   id: string;
