@@ -159,6 +159,15 @@ export function CheckIcon(props: IconProps) {
   );
 }
 
+export function VolumeOffIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 9.5v5h4l5 4v-13l-5 4H4Z" />
+      <path d="M16.5 9.5l4 5M20.5 9.5l-4 5" />
+    </svg>
+  );
+}
+
 export function AlertIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

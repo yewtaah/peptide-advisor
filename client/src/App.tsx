@@ -16,6 +16,10 @@ function App() {
         <Route path="health-assessment" element={<ComingSoon title="Health Assessment" />} />
         <Route path="wholesale" element={<ComingSoon title="Wholesale" />} />
         <Route path="join-network" element={<ComingSoon title="Join Network" />} />
+        <Route path="cart" element={<ComingSoon title="Shopping Cart" />} />
+        <Route path="account/profile" element={<ComingSoon title="Profile" />} />
+        <Route path="account/orders" element={<ComingSoon title="Orders" />} />
+        <Route path="account/settings" element={<ComingSoon title="Settings" />} />
       </Route>
     </Routes>
   );

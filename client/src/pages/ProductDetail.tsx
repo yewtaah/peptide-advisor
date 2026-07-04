@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { products } from "../data/products";
 import AvatarAdvisor from "../components/AvatarAdvisor";
 import {
@@ -13,6 +13,7 @@ import {
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const product = products.find((p) => p.id === id);
 
   if (!product) {
@@ -49,12 +50,20 @@ export default function ProductDetail() {
 
           <div className="mt-6">
             {product.rxRequired ? (
-              <button type="button" className="flex items-center gap-2 rounded-lg border border-rx-border bg-rx-bg px-5 py-3 text-sm font-semibold text-rx">
+              <button
+                type="button"
+                onClick={() => navigate("/practitioners")}
+                className="flex items-center gap-2 rounded-lg border border-rx-border bg-rx-bg px-5 py-3 text-sm font-semibold text-rx"
+              >
                 <LockIcon className="h-4 w-4" />
                 Rx Required — Consult a Practitioner
               </button>
             ) : (
-              <button type="button" className="flex items-center gap-2 rounded-lg bg-teal px-5 py-3 text-sm font-semibold text-bg hover:bg-teal-glow">
+              <button
+                type="button"
+                onClick={() => navigate("/cart")}
+                className="flex items-center gap-2 rounded-lg bg-teal px-5 py-3 text-sm font-semibold text-bg hover:bg-teal-glow"
+              >
                 <CartIcon className="h-4 w-4" />
                 Add to Cart
               </button>

@@ -1,9 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import type { Product } from "../data/products";
 import { generateAdvisorReply, type ChatMessage } from "../lib/advisor";
-import { SendIcon, VideoIcon, AlertIcon } from "./icons";
+import { SendIcon, VideoIcon, AlertIcon, VolumeOffIcon } from "./icons";
 
 type Status = "idle" | "connecting" | "connected" | "error";
+
+function attachAndPlay(
+  video: HTMLVideoElement,
+  stream: MediaStream,
+  onNeedsUnmute: () => void,
+) {
+  video.srcObject = stream;
+  video.muted = false;
+  video.play().catch(() => {
+    // Autoplay-with-sound was blocked; fall back to muted playback and
+    // let the user opt back into sound with a fresh click.
+    video.muted = true;
+    video.play().catch(() => {});
+    onNeedsUnmute();
+  });
+}
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? ""}/api/advisor`;
 
@@ -17,6 +33,8 @@ interface StreamStartResponse {
 export default function AvatarAdvisor({ product }: { product: Product }) {
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [videoReady, setVideoReady] = useState(false);
+  const [needsUnmute, setNeedsUnmute] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -51,6 +69,8 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
     greetedRef.current = false;
     setStatus("connecting");
     setErrorMessage(null);
+    setVideoReady(false);
+    setNeedsUnmute(false);
     try {
       const res = await fetch(`${API_BASE}/stream`, { method: "POST" });
       if (!res.ok) throw new Error("Could not start the avatar session");
@@ -63,7 +83,7 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
 
       pc.ontrack = (event) => {
         if (videoRef.current) {
-          videoRef.current.srcObject = event.streams[0];
+          attachAndPlay(videoRef.current, event.streams[0], () => setNeedsUnmute(true));
         }
       };
 
@@ -154,8 +174,30 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
             ref={videoRef}
             autoPlay
             playsInline
+            onPlaying={() => setVideoReady(true)}
             className={`h-full w-full object-contain ${status === "connected" ? "" : "hidden"}`}
           />
+          {status === "connected" && !videoReady && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-bg/80 p-4 text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-dark/40 border-t-teal-glow" />
+              <p className="text-xs text-muted">Loading avatar…</p>
+            </div>
+          )}
+          {status === "connected" && videoReady && needsUnmute && (
+            <button
+              type="button"
+              onClick={() => {
+                if (videoRef.current) {
+                  videoRef.current.muted = false;
+                  setNeedsUnmute(false);
+                }
+              }}
+              className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-bg/90 px-3 py-2 text-xs font-semibold text-ink hover:bg-bg"
+            >
+              <VolumeOffIcon className="h-4 w-4" />
+              Tap for sound
+            </button>
+          )}
           {status !== "connected" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
               {status === "error" ? (

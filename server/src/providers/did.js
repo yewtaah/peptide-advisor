@@ -1,6 +1,6 @@
 const DID_API_BASE = "https://api.d-id.com";
 
-const DEFAULT_PRESENTER_ID = "v2_public_jack@hOMV94SahG";
+const DEFAULT_PRESENTER_ID = "v2_public_frank_grey_suite_green_screen@BjMgHTdAhG";
 
 function authHeader() {
   const key = process.env.DID_API_KEY;
