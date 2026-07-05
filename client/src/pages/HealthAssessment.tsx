@@ -15,6 +15,7 @@ import {
 } from "../components/icons";
 
 type Status = "idle" | "connecting" | "connected" | "error";
+const READY_TIMEOUT_MS = 20000;
 
 const AGENT_ID = import.meta.env.VITE_DID_AGENT_ID as string | undefined;
 const CLIENT_KEY = import.meta.env.VITE_DID_AGENT_CLIENT_KEY as string | undefined;
@@ -73,9 +74,18 @@ export default function HealthAssessment() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const managerRef = useRef<AgentManager | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const readyTimeoutRef = useRef<number | null>(null);
+
+  function clearReadyTimeout() {
+    if (readyTimeoutRef.current !== null) {
+      window.clearTimeout(readyTimeoutRef.current);
+      readyTimeoutRef.current = null;
+    }
+  }
 
   useEffect(() => {
     return () => {
+      clearReadyTimeout();
       void managerRef.current?.disconnect();
     };
   }, []);
@@ -100,7 +110,18 @@ export default function HealthAssessment() {
           onConnectionStateChange: (state: ConnectionState) => {
             if (state === "connected") {
               setStatus("connected");
+              clearReadyTimeout();
+              readyTimeoutRef.current = window.setTimeout(() => {
+                if (!videoRef.current || videoRef.current.readyState < 2) {
+                  setStatus("error");
+                  setErrorMessage(
+                    "The assessment is taking longer than expected to respond. Please try again in a moment.",
+                  );
+                  void managerRef.current?.disconnect();
+                }
+              }, READY_TIMEOUT_MS);
             } else if (state === "fail" || state === "disconnected" || state === "closed") {
+              clearReadyTimeout();
               setStatus("error");
               setErrorMessage("The assessment connection was lost.");
             }
@@ -182,7 +203,10 @@ export default function HealthAssessment() {
               ref={videoRef}
               autoPlay
               playsInline
-              onPlaying={() => setVideoReady(true)}
+              onPlaying={() => {
+                clearReadyTimeout();
+                setVideoReady(true);
+              }}
               className={`h-full w-full object-contain ${status === "connected" ? "" : "hidden"}`}
             />
             {status === "connected" && !videoReady && (
@@ -242,7 +266,13 @@ export default function HealthAssessment() {
         <div className="rounded-xl border border-border bg-bg/60 md:col-span-3">
           <div className="max-h-72 space-y-4 overflow-y-auto p-5">
             {messages.length === 0 && (
-              <p className="text-sm text-muted">Click Start Assessment to begin.</p>
+              <p className="text-sm text-muted">
+                {status === "connected"
+                  ? "Waiting for your guide to say hello…"
+                  : status === "connecting"
+                    ? "Connecting to your health guide…"
+                    : "Click Start Assessment to begin."}
+              </p>
             )}
             {messages.map((m) => (
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>

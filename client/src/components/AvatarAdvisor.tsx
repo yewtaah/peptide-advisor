@@ -7,6 +7,7 @@ import { SendIcon, VideoIcon, AlertIcon, VolumeOffIcon } from "./icons";
 type Status = "idle" | "connecting" | "connected" | "error";
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? ""}/api/advisor`;
+const READY_TIMEOUT_MS = 20000;
 
 interface StreamStartResponse {
   id: string;
@@ -33,6 +34,14 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
   const streamIdRef = useRef<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const greetedRef = useRef(false);
+  const readyTimeoutRef = useRef<number | null>(null);
+
+  function clearReadyTimeout() {
+    if (readyTimeoutRef.current !== null) {
+      window.clearTimeout(readyTimeoutRef.current);
+      readyTimeoutRef.current = null;
+    }
+  }
 
   function speak(text: string) {
     if (!streamIdRef.current) return;
@@ -92,7 +101,18 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
             greetedRef.current = true;
             speak(messages[0].text);
           }
+          clearReadyTimeout();
+          readyTimeoutRef.current = window.setTimeout(() => {
+            if (!videoRef.current || videoRef.current.readyState < 2) {
+              setStatus("error");
+              setErrorMessage(
+                "The avatar is taking longer than expected to respond. Please try again in a moment.",
+              );
+              void disconnect();
+            }
+          }, READY_TIMEOUT_MS);
         } else if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+          clearReadyTimeout();
           setStatus("error");
           setErrorMessage("The avatar connection was lost.");
         }
@@ -116,6 +136,7 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
   }
 
   async function disconnect() {
+    clearReadyTimeout();
     const id = streamIdRef.current;
     const sessionId = sessionIdRef.current;
     pcRef.current?.close();
@@ -159,7 +180,10 @@ export default function AvatarAdvisor({ product }: { product: Product }) {
             ref={videoRef}
             autoPlay
             playsInline
-            onPlaying={() => setVideoReady(true)}
+            onPlaying={() => {
+              clearReadyTimeout();
+              setVideoReady(true);
+            }}
             className={`h-full w-full object-contain ${status === "connected" ? "" : "hidden"}`}
           />
           {status === "connected" && !videoReady && (
