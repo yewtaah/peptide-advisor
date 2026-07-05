@@ -168,6 +168,16 @@ export function VolumeOffIcon(props: IconProps) {
   );
 }
 
+export function MicIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="9" y="2.5" width="6" height="11" rx="3" />
+      <path d="M5.5 11v1.5a6.5 6.5 0 0 0 13 0V11" />
+      <path d="M12 19v3M9 22h6" />
+    </svg>
+  );
+}
+
 export function AlertIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

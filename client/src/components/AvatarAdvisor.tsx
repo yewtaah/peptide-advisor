@@ -1,25 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { Product } from "../data/products";
 import { generateAdvisorReply, type ChatMessage } from "../lib/advisor";
+import { attachAndPlay } from "../lib/media";
 import { SendIcon, VideoIcon, AlertIcon, VolumeOffIcon } from "./icons";
 
 type Status = "idle" | "connecting" | "connected" | "error";
-
-function attachAndPlay(
-  video: HTMLVideoElement,
-  stream: MediaStream,
-  onNeedsUnmute: () => void,
-) {
-  video.srcObject = stream;
-  video.muted = false;
-  video.play().catch(() => {
-    // Autoplay-with-sound was blocked; fall back to muted playback and
-    // let the user opt back into sound with a fresh click.
-    video.muted = true;
-    video.play().catch(() => {});
-    onNeedsUnmute();
-  });
-}
 
 const API_BASE = `${import.meta.env.VITE_API_BASE_URL ?? ""}/api/advisor`;
 

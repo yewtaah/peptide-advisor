@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Catalog from "./pages/Catalog";
 import ProductDetail from "./pages/ProductDetail";
+import HealthAssessment from "./pages/HealthAssessment";
 import ComingSoon from "./pages/ComingSoon";
 
 function App() {
@@ -13,7 +14,7 @@ function App() {
         <Route path="catalog" element={<Catalog />} />
         <Route path="product/:id" element={<ProductDetail />} />
         <Route path="practitioners" element={<ComingSoon title="Practitioners" />} />
-        <Route path="health-assessment" element={<ComingSoon title="Health Assessment" />} />
+        <Route path="health-assessment" element={<HealthAssessment />} />
         <Route path="wholesale" element={<ComingSoon title="Wholesale" />} />
         <Route path="join-network" element={<ComingSoon title="Join Network" />} />
         <Route path="cart" element={<ComingSoon title="Shopping Cart" />} />
