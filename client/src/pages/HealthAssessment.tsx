@@ -78,6 +78,7 @@ export default function HealthAssessment() {
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const readyTimeoutRef = useRef<number | null>(null);
   const greetedRef = useRef(false);
+  const reconnectAttemptedRef = useRef(false);
 
   function clearReadyTimeout() {
     if (readyTimeoutRef.current !== null) {
@@ -104,6 +105,7 @@ export default function HealthAssessment() {
     setVideoReady(false);
     setNeedsUnmute(false);
     greetedRef.current = false;
+    reconnectAttemptedRef.current = false;
     try {
       const manager = await sdk.createAgentManager(AGENT_ID, {
         auth: { type: "key", clientKey: CLIENT_KEY },
@@ -114,6 +116,7 @@ export default function HealthAssessment() {
           onConnectionStateChange: (state: ConnectionState) => {
             if (state === "connected") {
               setStatus("connected");
+              reconnectAttemptedRef.current = false;
               if (!greetedRef.current) {
                 greetedRef.current = true;
                 setMessages([{ id: "greeting", role: "assistant", content: GREETING_TEXT, parts: [] }]);
@@ -131,8 +134,19 @@ export default function HealthAssessment() {
               }, READY_TIMEOUT_MS);
             } else if (state === "fail" || state === "disconnected" || state === "closed") {
               clearReadyTimeout();
-              setStatus("error");
-              setErrorMessage("The assessment connection was lost.");
+              // The SDK can drop and recover the connection transiently (e.g. when the
+              // stream is renegotiated after the first spoken response) — give it one
+              // chance to self-heal via its own reconnect() before surfacing an error.
+              if (!reconnectAttemptedRef.current) {
+                reconnectAttemptedRef.current = true;
+                managerRef.current?.reconnect().catch(() => {
+                  setStatus("error");
+                  setErrorMessage("The assessment connection was lost.");
+                });
+              } else {
+                setStatus("error");
+                setErrorMessage("The assessment connection was lost.");
+              }
             }
           },
           onNewMessage: (msgs, type) => {
