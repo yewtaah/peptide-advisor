@@ -16,6 +16,8 @@ import {
 
 type Status = "idle" | "connecting" | "connected" | "error";
 const READY_TIMEOUT_MS = 20000;
+const GREETING_TEXT =
+  "Hi, I'm your AI health guide. I'll ask you 5 quick questions to find the right products for you — ready?";
 
 const AGENT_ID = import.meta.env.VITE_DID_AGENT_ID as string | undefined;
 const CLIENT_KEY = import.meta.env.VITE_DID_AGENT_CLIENT_KEY as string | undefined;
@@ -75,6 +77,7 @@ export default function HealthAssessment() {
   const managerRef = useRef<AgentManager | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const readyTimeoutRef = useRef<number | null>(null);
+  const greetedRef = useRef(false);
 
   function clearReadyTimeout() {
     if (readyTimeoutRef.current !== null) {
@@ -100,6 +103,7 @@ export default function HealthAssessment() {
     setErrorMessage(null);
     setVideoReady(false);
     setNeedsUnmute(false);
+    greetedRef.current = false;
     try {
       const manager = await sdk.createAgentManager(AGENT_ID, {
         auth: { type: "key", clientKey: CLIENT_KEY },
@@ -110,6 +114,11 @@ export default function HealthAssessment() {
           onConnectionStateChange: (state: ConnectionState) => {
             if (state === "connected") {
               setStatus("connected");
+              if (!greetedRef.current) {
+                greetedRef.current = true;
+                setMessages([{ id: "greeting", role: "assistant", content: GREETING_TEXT, parts: [] }]);
+                managerRef.current?.speak(GREETING_TEXT).catch(() => {});
+              }
               clearReadyTimeout();
               readyTimeoutRef.current = window.setTimeout(() => {
                 if (!videoRef.current || videoRef.current.readyState < 2) {
