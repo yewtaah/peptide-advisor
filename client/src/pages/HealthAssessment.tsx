@@ -15,7 +15,7 @@ import {
 } from "../components/icons";
 
 type Status = "idle" | "connecting" | "connected" | "error";
-const READY_TIMEOUT_MS = 20000;
+const READY_TIMEOUT_MS = 35000;
 const GREETING_TEXT =
   "Hi, I'm your AI health guide. I'll ask you 5 quick questions to find the right products for you — ready?";
 
