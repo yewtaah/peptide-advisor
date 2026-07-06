@@ -79,6 +79,7 @@ export default function HealthAssessment() {
   const readyTimeoutRef = useRef<number | null>(null);
   const greetedRef = useRef(false);
   const reconnectAttemptedRef = useRef(false);
+  const videoReadyRef = useRef(false);
 
   function clearReadyTimeout() {
     if (readyTimeoutRef.current !== null) {
@@ -106,6 +107,7 @@ export default function HealthAssessment() {
     setNeedsUnmute(false);
     greetedRef.current = false;
     reconnectAttemptedRef.current = false;
+    videoReadyRef.current = false;
     try {
       const manager = await sdk.createAgentManager(AGENT_ID, {
         auth: { type: "key", clientKey: CLIENT_KEY },
@@ -134,9 +136,13 @@ export default function HealthAssessment() {
               }, READY_TIMEOUT_MS);
             } else if (state === "fail" || state === "disconnected" || state === "closed") {
               clearReadyTimeout();
-              // The SDK can drop and recover the connection transiently (e.g. when the
-              // stream is renegotiated after the first spoken response) — give it one
-              // chance to self-heal via its own reconnect() before surfacing an error.
+              // The SDK renegotiates its stream internally right after the first spoken
+              // response, which briefly reports as disconnected even though the video
+              // itself keeps playing. Once video is already flowing, treat this as a
+              // benign internal blip rather than a fatal error.
+              if (videoReadyRef.current) return;
+              // Otherwise give it one chance to self-heal via its own reconnect()
+              // before surfacing an error.
               if (!reconnectAttemptedRef.current) {
                 reconnectAttemptedRef.current = true;
                 managerRef.current?.reconnect().catch(() => {
@@ -228,6 +234,7 @@ export default function HealthAssessment() {
               playsInline
               onPlaying={() => {
                 clearReadyTimeout();
+                videoReadyRef.current = true;
                 setVideoReady(true);
               }}
               className={`h-full w-full object-contain ${status === "connected" ? "" : "hidden"}`}
