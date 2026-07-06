@@ -165,6 +165,9 @@ export default function HealthAssessment() {
             }
           },
           onError: (err) => {
+            // Same benign internal renegotiation noise as the disconnect blip above —
+            // once video is flowing, don't let it tear down a working session.
+            if (videoReadyRef.current) return;
             setStatus("error");
             setErrorMessage(err.message || "Could not connect to the health assessment.");
           },
